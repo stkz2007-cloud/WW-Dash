@@ -3,123 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Werewolf GM - Mobile Edition</title>
+    <title>Werewolf GM - Mobile Edition Fix</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;500&display=swap');
-        
         * { box-sizing: border-box; }
-
-        body { 
-            font-family: 'Kanit', sans-serif; 
-            background: #0f0f1a; 
-            color: #e0e0e0; 
-            padding: 10px; 
-            margin: 0;
-        }
-
-        .container { 
-            max-width: 100%; 
-            margin: auto; 
-            background: #161625; 
-            padding: 15px; 
-            border-radius: 15px; 
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8); 
-        }
-
+        body { font-family: 'Kanit', sans-serif; background: #0f0f1a; color: #e0e0e0; padding: 10px; margin: 0; }
+        .container { max-width: 100%; margin: auto; background: #161625; padding: 15px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
         h1 { text-align: center; color: #ff2e63; font-size: 1.5rem; margin-bottom: 15px; }
-        
-        /* Stats Bar - ปรับให้ยืดหยุ่นในมือถือ */
-        .stats-bar { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 10px; 
-            margin-bottom: 20px; 
-            background: #1a1a2e; 
-            padding: 12px; 
-            border-radius: 12px; 
-            border: 1px solid #333; 
-        }
+        .stats-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; background: #1a1a2e; padding: 12px; border-radius: 12px; border: 1px solid #333; }
         .stat-item { font-size: 0.9em; text-align: center; }
-
-        /* ส่วนกรอกข้อมูล - ปรับให้ซ้อนกันในมือถือ */
-        .input-section { 
-            width: 100%;
-            margin-bottom: 25px; 
-        }
-        .input-row { 
-            display: flex; 
-            flex-direction: column; /* ซ้อนกันในมือถือ */
-            gap: 10px; 
-            margin-bottom: 10px; 
-        }
-        .input-row input { 
-            width: 100%; 
-            padding: 12px; 
-            border-radius: 8px; 
-            border: 1px solid #333; 
-            background: #2c2c2c; 
-            color: #fff; 
-            font-size: 1rem; 
-        }
-        .add-btn { 
-            width: 100%; 
-            padding: 14px; 
-            background: #ff2e63; 
-            color: white; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            font-size: 1rem;
-        }
-
-        /* หัวใจสำคัญ: ทำให้ตารางเลื่อนซ้ายขวาได้ */
-        .table-responsive {
-            width: 100%;
-            overflow-x: auto; /* เปิดการเลื่อนแนวนอน */
-            -webkit-overflow-scrolling: touch;
-            border-radius: 10px;
-            border: 1px solid #252535;
-        }
-
-        table { 
-            width: 100%; 
-            min-width: 600px; /* บังคับความกว้างขั้นต่ำเพื่อให้ตารางไม่เบียดกันจนอ่านไม่ออก */
-            border-collapse: collapse; 
-        }
-        
+        .input-section { width: 100%; margin-bottom: 25px; }
+        .input-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+        .input-row input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #2c2c2c; color: #fff; font-size: 1rem; }
+        .add-btn { width: 100%; padding: 14px; background: #ff2e63; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; border: 1px solid #252535; }
+        table { width: 100%; min-width: 650px; border-collapse: collapse; }
         th { background: #1a1a2e; color: #ff2e63; padding: 10px; font-size: 0.75em; white-space: nowrap; }
         td { padding: 8px; text-align: center; background: #161625; border-bottom: 1px solid #252535; }
-
-        /* Status Select & Input */
         .status-select { background: #0f3460; border: 1px solid #e94560; color: white; padding: 5px; border-radius: 5px; font-size: 0.85em; }
         .cupid-input { width: 65px; text-align: center; background: #2d1b24; color: #ff69b4; border: 1px solid #ff69b444; border-radius: 5px; font-size: 0.85em; }
-        
-        /* Row Highlighting */
         .status-dead { background: #3d0000 !important; color: #777; }
         .status-muted { color: #f0a500 !important; }
         .status-exiled { text-decoration: line-through; color: #ff4b2b !important; }
-        .row-protected { border-left: 4px solid #00adff; }
+        .row-protected { border-left: 4px solid #00adff; background: rgba(0, 173, 255, 0.05) !important; }
         .row-cult { border-left: 4px solid #b06ab3; }
         .row-hooligan { border-left: 4px solid #d35400; }
         .row-lover { border-left: 4px solid #ff69b4; }
-
-        /* Event Control */
         .event-control { background: #1a1a2e; padding: 10px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed #444; text-align: center; font-size: 0.9em; }
-
-        /* สำหรับหน้าจอใหญ่ (คอมพิวเตอร์) ให้กลับมาเป็นแนวนอน */
-        @media (min-width: 600px) {
-            .input-row { flex-direction: row; }
-            .stats-bar { grid-template-columns: repeat(3, 1fr); }
-            h1 { font-size: 2rem; }
-        }
+        @media (min-width: 600px) { .input-row { flex-direction: row; } .stats-bar { grid-template-columns: repeat(3, 1fr); } }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>🐺 WEREWOLF GM</h1>
-    
     <div class="stats-bar">
         <div class="stat-item">👥 ทั้งหมด: <span id="totalCount">0</span></div>
         <div class="stat-item stat-alive">🟢 มีชีวิต: <span id="aliveCount">0</span></div>
@@ -165,7 +82,6 @@
 </div>
 
 <script>
-    // Logic ทั้งหมดเหมือนเดิม (ตัดทอนข้อความเหตุการณ์ให้สั้นลงเพื่อมือถือ)
     const events = { 2:"หมาป่าใหม่", 3:"กำจัด 2 คนทันที", 4:"กำจัด 2 แทน 1", 5:"เผยเทพพยากรณ์", 6:"ไม่มีเหตุการณ์", 7:"ไม่มีเหตุการณ์", 8:"ไม่มีเหตุการณ์", 9:"เหมือนเมื่อวาน", 10:"ตัดตัวเลือก", 11:"ห้ามพูดคุย", 12:"เสียพลังพิเศษ" };
 
     function toggleEventPanel() { document.getElementById('eventPanel').style.display = document.getElementById('useEvent').checked ? 'block' : 'none'; }
@@ -193,7 +109,6 @@
         const nInput = document.getElementById('playerName');
         const rInput = document.getElementById('playerRole');
         if (!nInput.value.trim()) return;
-
         const table = document.getElementById('playerList');
         const row = document.createElement('tr');
         row.setAttribute('data-name', nInput.value.trim());
@@ -221,11 +136,38 @@
 
     function handleProtect(check) {
         const row = check.parentElement.parentElement;
+        const loverName = row.querySelector('.cupid-input').value.trim();
         row.classList.toggle('row-protected', check.checked);
+        
         if (check.checked) {
             const sel = row.querySelector('.status-select');
-            if (sel.value === 'dead') { sel.value = 'normal'; handleStatus(sel); }
+            if (sel.value === 'dead') {
+                sel.value = 'normal';
+                handleStatus(sel);
+            }
         }
+        // Sync ไปหาคู่รัก
+        if (loverName) syncProtect(loverName, check.checked);
+        updateStats();
+    }
+
+    function syncProtect(targetName, isProtected) {
+        document.querySelectorAll('#playerList tr').forEach(row => {
+            if (row.getAttribute('data-name') === targetName) {
+                const check = row.querySelector('.protect-check');
+                if (check.checked !== isProtected) {
+                    check.checked = isProtected;
+                    row.classList.toggle('row-protected', isProtected);
+                    if (isProtected) {
+                        const sel = row.querySelector('.status-select');
+                        if (sel.value === 'dead') {
+                            sel.value = 'normal';
+                            handleStatus(sel);
+                        }
+                    }
+                }
+            }
+        });
     }
 
     function handleStatus(select) {
@@ -236,7 +178,11 @@
         row.classList.remove('status-dead');
         row.querySelector('.name-tag').classList.remove('status-muted', 'status-exiled');
         if (select.value === 'dead') {
-            if (isProtected) { alert(`🛡️ ${name} ป้องกันอยู่!`); select.value = 'normal'; return; }
+            if (isProtected) {
+                alert(`🛡️ ${name} ป้องกันอยู่!`);
+                select.value = 'normal';
+                return;
+            }
             row.classList.add('status-dead');
             if (loverName) syncDead(loverName);
         } else if (select.value === 'muted') {
@@ -251,7 +197,10 @@
         document.querySelectorAll('#playerList tr').forEach(row => {
             if (row.getAttribute('data-name') === targetName && !row.querySelector('.protect-check').checked) {
                 const sel = row.querySelector('.status-select');
-                if (sel.value !== 'dead') { sel.value = 'dead'; handleStatus(sel); }
+                if (sel.value !== 'dead') {
+                    sel.value = 'dead';
+                    handleStatus(sel);
+                }
             }
         });
     }
