@@ -3,48 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Werewolf GM - Mobile Edition Fix</title>
+    <title>Werewolf GM</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;500&display=swap');
         * { box-sizing: border-box; }
         body { font-family: 'Kanit', sans-serif; background: #0f0f1a; color: #e0e0e0; padding: 10px; margin: 0; }
         .container { max-width: 100%; margin: auto; background: #161625; padding: 15px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
         h1 { text-align: center; color: #ff2e63; font-size: 1.5rem; margin-bottom: 15px; }
-        .stats-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; background: #1a1a2e; padding: 12px; border-radius: 12px; border: 1px solid #333; }
-        .stat-item { font-size: 0.9em; text-align: center; }
+        
+        /* Stats Bar - เพิ่มช่องลัทธิ */
+        .stats-bar { 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 10px; 
+            margin-bottom: 20px; 
+            background: #1a1a2e; 
+            padding: 12px; 
+            border-radius: 12px; 
+            border: 1px solid #333; 
+        }
+        .stat-item { font-size: 0.85em; text-align: center; font-weight: 500; }
+        .stat-alive { color: #4ecca3; }
+        .stat-dead { color: #ff4b2b; }
+        .stat-cult { color: #b06ab3; } /* สีม่วงสำหรับลัทธิ */
+
         .input-section { width: 100%; margin-bottom: 25px; }
         .input-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
         .input-row input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #2c2c2c; color: #fff; font-size: 1rem; }
         .add-btn { width: 100%; padding: 14px; background: #ff2e63; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 1rem; }
+        
         .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 10px; border: 1px solid #252535; }
         table { width: 100%; min-width: 650px; border-collapse: collapse; }
         th { background: #1a1a2e; color: #ff2e63; padding: 10px; font-size: 0.75em; white-space: nowrap; }
         td { padding: 8px; text-align: center; background: #161625; border-bottom: 1px solid #252535; }
+        
         .status-select { background: #0f3460; border: 1px solid #e94560; color: white; padding: 5px; border-radius: 5px; font-size: 0.85em; }
-        .cupid-input { width: 65px; text-align: center; background: #2d1b24; color: #ff69b4; border: 1px solid #ff69b444; border-radius: 5px; font-size: 0.85em; }
-        .status-dead { background: #3d0000 !important; color: #777; }
+        .cupid-input { width: 60px; text-align: center; background: #2d1b24; color: #ff69b4; border: 1px solid #ff69b444; border-radius: 5px; font-size: 0.85em; }
+        
+        /* สไตล์ชื่อตามสถานะ */
+        .name-tag { font-size: 0.9em; font-weight: bold; transition: 0.3s; }
+        .status-dead-text { color: #8b0000 !important; text-decoration: line-through !important; }
+        .row-dead-bg { background: #2a0000 !important; color: #666; }
         .status-muted { color: #f0a500 !important; }
-        .status-exiled { text-decoration: line-through; color: #ff4b2b !important; }
+        .status-exiled { color: #4b0082 !important; text-decoration: none !important; }
+
         .row-protected { border-left: 4px solid #00adff; background: rgba(0, 173, 255, 0.05) !important; }
-        .row-cult { border-left: 4px solid #b06ab3; }
+        .row-cult { border-left: 4px solid #b06ab3; background: rgba(176, 106, 179, 0.05) !important; }
         .row-hooligan { border-left: 4px solid #d35400; }
         .row-lover { border-left: 4px solid #ff69b4; }
+
         .event-control { background: #1a1a2e; padding: 10px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed #444; text-align: center; font-size: 0.9em; }
-        @media (min-width: 600px) { .input-row { flex-direction: row; } .stats-bar { grid-template-columns: repeat(3, 1fr); } }
+
+        @media (min-width: 600px) { 
+            .input-row { flex-direction: row; } 
+            .stats-bar { grid-template-columns: repeat(4, 1fr); } 
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>🐺 WEREWOLF GM</h1>
+    
     <div class="stats-bar">
         <div class="stat-item">👥 ทั้งหมด: <span id="totalCount">0</span></div>
         <div class="stat-item stat-alive">🟢 มีชีวิต: <span id="aliveCount">0</span></div>
         <div class="stat-item stat-dead">💀 ตายแล้ว: <span id="deadCount">0</span></div>
+        <div class="stat-item stat-cult">👁️ ลัทธิ: <span id="cultCount">0</span></div>
     </div>
 
     <div class="event-control">
-        <label><input type="checkbox" id="useEvent" onchange="toggleEventPanel()"> ระบบเหตุการณ์ประจำวัน</label>
+        <label style="cursor:pointer;"><input type="checkbox" id="useEvent" onchange="toggleEventPanel()"> ระบบเหตุการณ์ประจำวัน</label>
         <div id="eventPanel" style="display: none; margin-top: 10px;">
             <button class="add-btn" style="width: auto; padding: 8px 20px;" id="rollBtn" onclick="rollEventWithAnim()">🎲 ทอยลูกเต๋า</button>
             <div id="eventDisplay" style="margin-top:10px;">
@@ -69,7 +98,7 @@
                     <th>ชื่อ</th>
                     <th>บทบาท</th>
                     <th>❤️ คู่</th>
-                    <th>👊 อันธพาล</th>
+                    <th>👊 อันธ</th>
                     <th>👁️ ลัทธิ</th>
                     <th>🛡️ กัน</th>
                     <th>⚙️ สถานะ</th>
@@ -113,11 +142,11 @@
         const row = document.createElement('tr');
         row.setAttribute('data-name', nInput.value.trim());
         row.innerHTML = `
-            <td><span class="name-tag" style="font-size:0.9em;">${nInput.value.trim()}</span></td>
-            <td><input type="text" style="width:50px; background:none; border:1px solid #444; color:#4ecca3; text-align:center; font-size:0.8em;" value="${rInput.value.trim()}"></td>
+            <td><span class="name-tag">${nInput.value.trim()}</span></td>
+            <td><input type="text" style="width:55px; background:none; border:1px solid #444; color:#4ecca3; text-align:center; font-size:0.8em;" value="${rInput.value.trim()}"></td>
             <td><input type="text" class="cupid-input" placeholder="..." oninput="this.parentElement.parentElement.classList.toggle('row-lover', this.value!=='')"></td>
             <td><input type="checkbox" onchange="this.parentElement.parentElement.classList.toggle('row-hooligan', this.checked)"></td>
-            <td><input type="checkbox" onchange="this.parentElement.parentElement.classList.toggle('row-cult', this.checked)"></td>
+            <td><input type="checkbox" class="cult-check" onchange="this.parentElement.parentElement.classList.toggle('row-cult', this.checked); updateStats();"></td>
             <td><input type="checkbox" class="protect-check" onchange="handleProtect(this)"></td>
             <td>
                 <select class="status-select" onchange="handleStatus(this)">
@@ -138,15 +167,10 @@
         const row = check.parentElement.parentElement;
         const loverName = row.querySelector('.cupid-input').value.trim();
         row.classList.toggle('row-protected', check.checked);
-        
         if (check.checked) {
             const sel = row.querySelector('.status-select');
-            if (sel.value === 'dead') {
-                sel.value = 'normal';
-                handleStatus(sel);
-            }
+            if (sel.value === 'dead') { sel.value = 'normal'; handleStatus(sel); }
         }
-        // Sync ไปหาคู่รัก
         if (loverName) syncProtect(loverName, check.checked);
         updateStats();
     }
@@ -160,10 +184,7 @@
                     row.classList.toggle('row-protected', isProtected);
                     if (isProtected) {
                         const sel = row.querySelector('.status-select');
-                        if (sel.value === 'dead') {
-                            sel.value = 'normal';
-                            handleStatus(sel);
-                        }
+                        if (sel.value === 'dead') { sel.value = 'normal'; handleStatus(sel); }
                     }
                 }
             }
@@ -172,23 +193,23 @@
 
     function handleStatus(select) {
         const row = select.parentElement.parentElement;
+        const nameTag = row.querySelector('.name-tag');
         const name = row.getAttribute('data-name');
         const isProtected = row.querySelector('.protect-check').checked;
         const loverName = row.querySelector('.cupid-input').value.trim();
-        row.classList.remove('status-dead');
-        row.querySelector('.name-tag').classList.remove('status-muted', 'status-exiled');
+
+        row.classList.remove('row-dead-bg');
+        nameTag.classList.remove('status-dead-text', 'status-muted', 'status-exiled');
+
         if (select.value === 'dead') {
-            if (isProtected) {
-                alert(`🛡️ ${name} ป้องกันอยู่!`);
-                select.value = 'normal';
-                return;
-            }
-            row.classList.add('status-dead');
+            if (isProtected) { alert(`🛡️ ${name} ป้องกันอยู่!`); select.value = 'normal'; return; }
+            row.classList.add('row-dead-bg');
+            nameTag.classList.add('status-dead-text');
             if (loverName) syncDead(loverName);
         } else if (select.value === 'muted') {
-            row.querySelector('.name-tag').classList.add('status-muted');
+            nameTag.classList.add('status-muted');
         } else if (select.value === 'exiled') {
-            row.querySelector('.name-tag').classList.add('status-exiled');
+            nameTag.classList.add('status-exiled');
         }
         updateStats();
     }
@@ -197,21 +218,33 @@
         document.querySelectorAll('#playerList tr').forEach(row => {
             if (row.getAttribute('data-name') === targetName && !row.querySelector('.protect-check').checked) {
                 const sel = row.querySelector('.status-select');
-                if (sel.value !== 'dead') {
-                    sel.value = 'dead';
-                    handleStatus(sel);
-                }
+                if (sel.value !== 'dead') { sel.value = 'dead'; handleStatus(sel); }
             }
         });
     }
 
     function updateStats() {
         const rows = document.querySelectorAll('#playerList tr');
-        let deadCount = 0;
-        rows.forEach(r => { if (r.querySelector('.status-select').value === 'dead') deadCount++; });
-        document.getElementById('totalCount').innerText = rows.length;
-        document.getElementById('aliveCount').innerText = rows.length - deadCount;
-        document.getElementById('deadCount').innerText = deadCount;
+        let total = rows.length;
+        let dead = 0;
+        let cultists = 0;
+
+        rows.forEach(r => {
+            const status = r.querySelector('.status-select').value;
+            const isCultist = r.querySelector('.cult-check').checked;
+            
+            if (status === 'dead') {
+                dead++;
+            } else {
+                // นับเฉพาะคนของลัทธิที่ยังมีชีวิตอยู่
+                if (isCultist) cultists++;
+            }
+        });
+
+        document.getElementById('totalCount').innerText = total;
+        document.getElementById('aliveCount').innerText = total - dead;
+        document.getElementById('deadCount').innerText = dead;
+        document.getElementById('cultCount').innerText = cultists;
     }
 </script>
 </body>
