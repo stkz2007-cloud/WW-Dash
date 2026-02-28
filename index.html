@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WEREWOLF ONLINE PRO (WWDASH SYNC)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff2e63;
+            --bg: #0f0f1a;
+            --card: #161625;
+            --v: #4ecca3;
+            --w: #ff4b2b;
+            --mute: #f39c12;
+            --exile: #7f8c8d;
+            --cupid: #ff69b4;
+            --guide: #00adb5;
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: var(--bg);
+            color: #e0e0e0;
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            transition: background 0.5s ease;
+            /* ปรับให้ซูมออกเล็กน้อยเพื่อให้ GM ดูง่าย */
+            zoom: 0.9;
+        }
+
+        body.night { background: #0a0a2e; }
+        body.day { background: #4a3300; }
+        body.vote { background: #3d0000; }
+
+        .container { width: 100%; max-width: 600px; }
+
+        .card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 1px solid #333;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .hidden { display: none !important; }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background: #252535;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 5px 0;
+            transition: 0.2s;
+        }
+
+        button:active { transform: scale(0.98); }
+
+        .btn-main { background: var(--primary); color: white; }
+        .btn-secondary { background: #333; color: white; }
+        .btn-guide { 
+            background: var(--guide); 
+            color: white; 
+            width: auto; 
+            padding: 5px 15px; 
+            font-size: 0.8em;
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        /* ตารางสถานะ GM */
+        .tr-normal { background: transparent; }
+        .tr-dead { background: rgba(255, 46, 99, 0.3); }
+        .tr-muted { background: rgba(243, 156, 18, 0.25); }
+        .tr-exiled { background: rgba(127, 140, 141, 0.25); }
+
+        .name-dead { text-decoration: line-through; color: var(--w); }
+        .name-muted { color: var(--mute); }
+        
+        .dashboard-table { width: 100%; border-collapse: collapse; }
+        .dashboard-table td { padding: 12px 5px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+
+        .couple-active { outline: 2px solid var(--cupid); outline-offset: -2px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div id="screen-auth" class="card">
+        <h1 style="text-align:center; color:var(--primary); margin:0;">WEREWOLF DASH 🐺</h1>
+        <input type="text" id="username" placeholder="ชื่อของคุณ">
+        <input type="text" id="room-code" placeholder="รหัสห้อง 4 หลัก">
+        <button class="btn-main" id="btn-create">สร้างห้อง (HOST)</button>
+        <button class="btn-secondary" id="btn-join">เข้าร่วมห้อง</button>
+    </div>
+
+    <div id="screen-lobby" class="card hidden">
+        <button class="btn-guide hidden" id="gm-guide-btn" onclick="window.open('https://fluke-fluke.github.io/wwdash/', '_blank')">เปิดคู่มือแดชบอร์ด 📖</button>
+        <h2 style="margin-top: 0;">ห้อง: <span id="display-room" style="color:var(--primary)">----</span></h2>
+        <div id="player-list"></div>
+        <div id="gm-setup" class="hidden">
+            <div id="role-selector" style="max-height: 250px; overflow-y: auto; margin-bottom: 10px; border: 1px solid #333; padding: 10px; border-radius: 10px;"></div>
+            <button class="btn-main" id="btn-start-game" style="background:var(--v); color:#000;">เริ่มเกม & ซิงค์ข้อมูล</button>
+        </div>
+    </div>
+
+    <div id="screen-game" class="card hidden">
+        <div id="phase-label" style="text-align:center; padding:10px; border-radius:10px; margin-bottom:15px; font-weight:bold;">ช่วงเวลา</div>
+        <div id="gm-view" class="hidden">
+            <table class="dashboard-table">
+                <tbody id="gm-table-body"></tbody>
+            </table>
+            <button class="btn-main" id="btn-next-phase" style="margin-top:15px;">ถัดไป (Phase Change) ➡️</button>
+            <button class="btn-secondary" id="btn-end-game">จบเกม / รีเซ็ต</button>
+        </div>
+        <div id="player-view">
+            <div id="role-display" style="text-align:center;">
+                <h3 id="my-role-name">กำลังรับบทบาท...</h3>
+                <p id="my-role-desc" style="font-size: 0.9em; opacity: 0.7;"></p>
+                <div id="my-status-box" style="padding:10px; border-radius:10px; margin-top:10px;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    // ใช้บทบาทแบบจัดเต็มตามที่คุณเคยส่งมา
+        const rolesData = [
+        // --- 🛡️ ฝ่ายชาวบ้าน (Human Team) ---
+        { id: 'v1', team: 'human', name: 'ชาวบ้าน', en: 'Villager', p: 1, desc: 'ไม่มีความสามารถพิเศษ พยายามหาตัวหมาป่าให้เจอ' },
+        { id: 'v2', team: 'human', name: 'เทพพยากรณ์', en: 'Seer', p: 7, desc: 'ตรวจสอบผู้เล่น 1 คนในแต่ละคืน ว่าเป็นหมาป่าหรือไม่' },
+        { id: 'v3', team: 'human', name: 'จอมเวท', en: 'Spellcaster', p: 1, desc: 'เลือกผู้เล่นหนึ่งคนห้ามพูดในวันถัดไป (โดนใบ้)' },
+        { id: 'v4', team: 'human', name: 'กามเทพ', en: 'Cupid', p: -3, desc: 'เลือกคู่รัก 2 คน หากคนใดคนหนึ่งตาย อีกคนจะตายตาม' },
+        { id: 'v5', team: 'human', name: 'บอดี้การ์ด', en: 'Bodyguard', p: 3, desc: 'ปกป้องผู้เล่น 1 คนจากการถูกฆ่า (ห้ามเลือกตัวเอง/ซ้ำคืนเดิม)' },
+        { id: 'v6', team: 'human', name: 'ญาณทิพย์', en: 'Aura Seer', p: 3, desc: 'ตรวจสอบว่าผู้เล่นเป็นบทบาทพิเศษ (ไม่ใช่ชาวบ้าน/หมาป่าปกติ) หรือไม่' },
+        { id: 'v7', team: 'human', name: 'ขี้เมา', en: 'Drunk', p: 4, desc: 'ในช่วงแรกจะไม่รู้บทบาทตัวเอง จะรู้บทบาทจริงในคืนที่ 3' },
+        { id: 'v8', team: 'human', name: 'เจ้าชาย', en: 'Prince', p: 3, desc: 'หากถูกโหวตประหาร จะไม่ตายและต้องเผยบทบาทให้ทุกคนรู้' },
+        { id: 'v9', team: 'human', name: 'นักบวช', en: 'Priest', p: 3, desc: 'สามารถปกป้องผู้เล่นให้รอดจากการตายได้ 1 ครั้งต่อเกม' },
+        { id: 'v10', team: 'human', name: 'นักสืบเอกชน', en: 'P.I.', p: 3, desc: 'ตรวจสอบผู้เล่น 1 คน และคนข้างๆ ว่ามีใครเป็นหมาป่าหรือไม่' },
+        { id: 'v11', team: 'human', name: 'ตัวป่วน', en: 'Troublemaker', p: -3, desc: 'กวนการโหวต ทำให้มีการโหวตกำจัดคนได้ 2 คนในวันถัดไป' },
+        { id: 'v12', team: 'human', name: 'แม่มด', en: 'Witch', p: 4, desc: 'มียาชุบชีวิต 1 ขวด และยาพิษ 1 ขวด ใช้ได้ตลอดทั้งเกม' },
+        { id: 'v13', team: 'human', name: 'แม่หมอ', en: 'Old Hag', p: 1, desc: 'เลือกสาปผู้เล่นให้ออกจากหมู่บ้าน (ห้ามโหวต) ในวันถัดไป' },
+        { id: 'v14', team: 'human', name: 'ศิษย์พยากรณ์', en: 'Apprentice Seer', p: 4, desc: 'หากเทพพยากรณ์ตาย คุณจะสืบทอดพลังและกลายเป็นเทพพยากรณ์แทน' },
+        { id: 'v15', team: 'human', name: 'นายกเทศมนตรี', en: 'Mayor', p: 2, desc: 'เมื่อโหวต เสียงของคุณจะมีค่าเท่ากับ 2 เสียง' },
+        { id: 'v16', team: 'human', name: 'นายพราน', en: 'Hunter', p: 3, desc: 'หากตาย สามารถเลือกยิงผู้เล่นคนอื่นให้ตายตกตามกันได้ 1 คน' },
+        { id: 'v17', team: 'human', name: 'ผู้ป่วยติดเชื้อ', en: 'Disease', p: 3, desc: 'ถ้าหมาป่ากินคุณ หมาป่าจะติดโรคและฆ่าใครไม่ได้ในคืนถัดไป' },
+        { id: 'v18', team: 'human', name: 'ผู้รักสันติ', en: 'Pacifist', p: -1, desc: 'ต้องพยายามโหวตให้ผู้เล่นรอดเสมอ (คะแนนโหวตสวนทาง)' },
+        { id: 'v19', team: 'human', name: 'พรายกระซิบ', en: 'Ghost', p: 2, desc: 'จะตายในคืนแรก และสามารถส่งข้อความ 1 ตัวอักษรให้คนเป็นได้ในแต่ละวัน' },
+        { id: 'v20', team: 'human', name: 'เมสัน', en: 'Mason', p: 2, desc: 'จะรู้จักเมสันคนอื่นๆ ตั้งแต่คืนแรก' },
+        { id: 'v21', team: 'human', name: 'ภูตจำแลง', en: 'Doppelganger', p: -2, desc: 'เลือกคนหนึ่ง เมื่อคนนั้นตายคุณจะกลายเป็นบทบาทนั้นแทน' },
+        { id: 'v22', team: 'human', name: 'ลูกครึ่งหมาป่า', en: 'Lycan', p: -1, desc: 'เป็นชาวบ้าน แต่เทพพยากรณ์จะมองเห็นคุณเป็นหมาป่า' },
+        { id: 'v23', team: 'human', name: 'หนุ่มถึก', en: 'Tough Guy', p: 3, desc: 'ถ้าถูกหมาป่าฆ่า จะยังไม่ตายทันที แต่จะตายในคืนถัดไป' },
+        { id: 'v24', team: 'human', name: 'ไอ้ทึ่ม', en: 'Villager Idiot', p: 2, desc: 'ต้องโหวตประหารผู้เล่นเสมอ' },
+        { id: 'v25', team: 'human', name: 'ผู้เผยตัวตน', en: 'Revealer', p: 4, desc: 'ชี้เป้าหมาป่า ถ้าถูกหมาป่าจะตาย ถ้าชี้ผิดคุณจะตายแทน' },
+        { id: 'v26', team: 'human', name: 'นักสะกดจิต', en: 'Mentalist', p: 6, desc: 'ตรวจสอบผู้เล่น 2 คน ว่าอยู่ฝ่ายเดียวกันหรือไม่' },
+        { id: 'v27', team: 'human', name: 'พรานหญิง', en: 'Huntress', p: 3, desc: 'สามารถเลือกฆ่าคนได้ 1 ครั้งในช่วงกลางคืน' },
+        { id: 'v28', team: 'human', name: 'เทพผู้รู้แจ้ง', en: 'Mystic Seer', p: 9, desc: 'รู้บทบาทที่แท้จริงของผู้เล่นที่ตรวจสอบทันที (แม่นยำกว่าเทพพยากรณ์)' },
+
+        // --- 🐺 ฝ่ายหมาป่า (Wolf Team) ---
+        { id: 'w1', team: 'wolf', name: 'หมาป่า', en: 'Werewolf', p: -6, desc: 'รวมหัวกับเพื่อนหมาป่าเพื่อฆ่าคนในทุกๆ คืน' },
+        { id: 'w2', team: 'wolf', name: 'หมาป่าเดียวดาย', en: 'Lone Wolf', p: -5, desc: 'ตื่นมาพร้อมหมาป่า แต่จะชนะได้ก็ต่อเมื่อเหลือรอดคนสุดท้ายคนเดียว' },
+        { id: 'w3', team: 'wolf', name: 'ลูกหมาป่า', en: 'Wolf Cub', p: -8, desc: 'ถ้าคุณตาย เพื่อนหมาป่าจะโกรธแค้นและฆ่าได้ 2 คนในคืนถัดไป' },
+        { id: 'w4', team: 'wolf', name: 'สมุนรับใช้', en: 'Minion', p: -6, desc: 'รู้ว่าใครเป็นหมาป่า แต่หมาป่าไม่รู้ว่าคุณเป็นใคร และไม่ได้ตื่นมาฆ่า' },
+        { id: 'w5', team: 'wolf', name: 'นางปีศาจ', en: 'Sorcerer', p: -3, desc: 'ตรวจสอบผู้เล่นเพื่อตามหาตัวเทพพยากรณ์ในแต่ละคืน' },
+        { id: 'w6', team: 'wolf', name: 'ผู้ต้องคำสาป', en: 'Cursed', p: -3, desc: 'เริ่มต้นเป็นชาวบ้าน แต่ถ้าโดนหมาป่ากัดจะกลายเป็นหมาป่าทันที' },
+        { id: 'w7', team: 'wolf', name: 'หมาป่าจ่าฝูง', en: 'Alpha Wolf', p: -9, desc: 'สามารถเปลี่ยนเหยื่อให้กลายเป็นหมาป่าตัวใหม่ได้ 1 ครั้งต่อเกม' },
+        { id: 'w8', team: 'wolf', name: 'หมาป่าลึกลับ', en: 'Mystic Wolf', p: -9, desc: 'ตรวจสอบบทบาทพิเศษของชาวบ้านได้ในแต่ละคืน' },
+
+        // --- 🔮 ฝ่ายอิสระ (Other Team) ---
+        { id: 'o1', team: 'other', name: 'อันธพาล', en: 'Hoodlum', p: 0, desc: 'เลือกเป้าหมาย 2 คน ถ้าทั้งคู่ตายและคุณรอด คุณชนะ' },
+        { id: 'o2', team: 'other', name: 'ยาจก', en: 'Tanner', p: -2, desc: 'คุณเกลียดชีวิตตัวเอง คุณชนะได้ทางเดียวคือต้องทำให้คนโหวตประหารคุณ' },
+        { id: 'o3', team: 'other', name: 'แวมไพร์', en: 'Vampire', p: -7, desc: 'เลือกกัดคนในแต่ละคืน หมาป่าฆ่าคุณไม่ได้ และคุณจะชนะถ้าฆ่าคนหมด' },
+        { id: 'o4', team: 'other', name: 'เจ้าลัทธิ', en: 'Cult Leader', p: 1, desc: 'ล้างสมองคนเข้าลัทธิในทุกคืน ชนะเมื่อทุกคนที่เหลือรอดอยู่ในลัทธิหมด' },
+        { id: 'o5', team: 'other', name: 'มือระเบิดพลีชีพ', en: 'Mad Bomber', p: -2, desc: 'หากคุณถูกฆ่าหรือถูกโหวต คนที่นั่งข้างๆ ซ้าย-ขวา จะระเบิดตายตามไปด้วย' },
+        { id: 'o6', team: 'other', name: 'ฆาตกรต่อเนื่อง', en: 'Serial Killer', p: -8, desc: 'ตื่นมาฆ่าคนได้ทุกคืน และต้องเหลือรอดเป็นคนสุดท้ายเพื่อชนะ' }
+    ];
+
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyD3votmuYJDxy7--PvFj_qe-vk2axspjqo",
+        authDomain: "fir-77b01.firebaseapp.com",
+        databaseURL: "https://fir-77b01-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "fir-77b01",
+        storageBucket: "fir-77b01.firebasestorage.app",
+        messagingSenderId: "364738165804",
+        appId: "1:364738165804:web:248db4d4a74e146999e589"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let myName = "", currentRoom = "", selectedRoles = [];
+
+    // ฟังก์ชันสร้างห้อง (Sync โครงสร้างกับ wwdash)
+    document.getElementById('btn-create').onclick = async () => {
+        myName = document.getElementById('username').value.trim();
+        currentRoom = document.getElementById('room-code').value.trim();
+        if(!myName || !currentRoom) return alert("ระบุชื่อและรหัสห้อง");
+        
+        await set(ref(db, 'rooms/' + currentRoom), {
+            status: 'waiting',
+            gm: myName,
+            players: {[myName]: true},
+            phase: 0,
+            lastUpdated: Date.now()
+        });
+        initLobby();
+    };
+
+    // ฟังก์ชันอัปเดตสถานะแบบกามเทพ (Linked Update)
+    window.updateStatus = (targetName, newStatus) => {
+        onValue(ref(db, `rooms/${currentRoom}/gameData`), (snap) => {
+            const allData = snap.val();
+            const updates = {};
+            
+            // ถ้าคนที่จะเปลี่ยนสถานะ มีคู่รัก (isLinked)
+            if(allData[targetName].isLinked) {
+                Object.keys(allData).forEach(pName => {
+                    if(allData[pName].isLinked) {
+                        updates[`gameData/${pName}/status`] = newStatus;
+                    }
+                });
+            } else {
+                updates[`gameData/${targetName}/status`] = newStatus;
+            }
+            
+            update(ref(db, `rooms/${currentRoom}`), updates);
+        }, { onlyOnce: true });
+    };
+
+    // เชื่อมต่อการเปลี่ยนเฟส (Sync กับ Database)
+    document.getElementById('btn-next-phase').onclick = () => {
+        onValue(ref(db, `rooms/${currentRoom}/phase`), (s) => {
+            let next = (s.val() + 1) % 3;
+            update(ref(db, `rooms/${currentRoom}`), { phase: next });
+        }, { onlyOnce: true });
+    };
+
+    // ส่วนการแสดงผล GM Table (ปรับ UI ใหม่ตามสั่ง)
+    function renderGMTable(data) {
+        const tbody = document.getElementById('gm-table-body');
+        tbody.innerHTML = "";
+        for(let p in data.gameData) {
+            const info = data.gameData[p];
+            const tr = document.createElement('tr');
+            tr.className = `tr-${info.status} ${info.isLinked ? 'couple-active' : ''}`;
+            
+            tr.innerHTML = `
+                <td><b class="name-${info.status}">${p}</b><br><small>${info.role}</small></td>
+                <td>
+                    <select onchange="window.updateStatus('${p}', this.value)">
+                        <option value="normal" ${info.status==='normal'?'selected':''}>มีชีวิต</option>
+                        <option value="dead" ${info.status==='dead'?'selected':''}>ตาย</option>
+                        <option value="muted" ${info.status==='muted'?'selected':''}>ใบ้</option>
+                        <option value="exiled" ${info.status==='exiled'?'selected':''}>เนรเทศ</option>
+                    </select>
+                </td>
+                <td>
+                    <button onclick="window.toggleLink('${p}', ${info.isLinked})" style="background:var(--cupid); padding:5px;">🔗</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+    }
+
+    // ฟังก์ชันอื่นๆ (initLobby, renderGame) จะทำงานอัตโนมัติเมื่อ Database เปลี่ยนแปลง
+    // โค้ดส่วนนี้จะทำงานซิงค์กับเว็บไซต์ https://fluke-fluke.github.io/wwdash/ ทันทีถ้าใช้ Firebase เดียวกัน
+</script>
+</body>
+</html>
