@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Werewolf GM</title>
+    <title>Werewolf GM - Full Event Edition</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;500&display=swap');
         * { box-sizing: border-box; }
@@ -11,7 +11,6 @@
         .container { max-width: 100%; margin: auto; background: #161625; padding: 15px; border-radius: 15px; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
         h1 { text-align: center; color: #ff2e63; font-size: 1.5rem; margin-bottom: 15px; }
         
-        /* Stats Bar - เพิ่มช่องลัทธิ */
         .stats-bar { 
             display: grid; 
             grid-template-columns: 1fr 1fr; 
@@ -22,10 +21,21 @@
             border-radius: 12px; 
             border: 1px solid #333; 
         }
-        .stat-item { font-size: 0.85em; text-align: center; font-weight: 500; }
-        .stat-alive { color: #4ecca3; }
-        .stat-dead { color: #ff4b2b; }
-        .stat-cult { color: #b06ab3; } /* สีม่วงสำหรับลัทธิ */
+        .stat-item { font-size: 0.85em; text-align: center; }
+        .stat-cult { color: #b06ab3; font-weight: bold; }
+
+        /* Event Display ปรับให้รองรับข้อความยาว */
+        .event-control { background: #1a1a2e; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed #444; text-align: center; }
+        #eventDisplay { 
+            margin-top: 15px; 
+            padding: 15px; 
+            background: #252535; 
+            border-radius: 8px; 
+            border-left: 5px solid #ff2e63;
+            text-align: left;
+            line-height: 1.5;
+        }
+        .dice-num { font-size: 2em; color: #ff2e63; font-weight: bold; display: block; text-align: center; margin-bottom: 5px; }
 
         .input-section { width: 100%; margin-bottom: 25px; }
         .input-row { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
@@ -52,8 +62,6 @@
         .row-hooligan { border-left: 4px solid #d35400; }
         .row-lover { border-left: 4px solid #ff69b4; }
 
-        .event-control { background: #1a1a2e; padding: 10px; border-radius: 12px; margin-bottom: 20px; border: 1px dashed #444; text-align: center; font-size: 0.9em; }
-
         @media (min-width: 600px) { 
             .input-row { flex-direction: row; } 
             .stats-bar { grid-template-columns: repeat(4, 1fr); } 
@@ -67,18 +75,18 @@
     
     <div class="stats-bar">
         <div class="stat-item">👥 ทั้งหมด: <span id="totalCount">0</span></div>
-        <div class="stat-item stat-alive">🟢 มีชีวิต: <span id="aliveCount">0</span></div>
-        <div class="stat-item stat-dead">💀 ตายแล้ว: <span id="deadCount">0</span></div>
+        <div class="stat-item" style="color:#4ecca3">🟢 มีชีวิต: <span id="aliveCount">0</span></div>
+        <div class="stat-item" style="color:#ff4b2b">💀 ตายแล้ว: <span id="deadCount">0</span></div>
         <div class="stat-item stat-cult">👁️ ลัทธิ: <span id="cultCount">0</span></div>
     </div>
 
     <div class="event-control">
         <label style="cursor:pointer;"><input type="checkbox" id="useEvent" onchange="toggleEventPanel()"> ระบบเหตุการณ์ประจำวัน</label>
-        <div id="eventPanel" style="display: none; margin-top: 10px;">
-            <button class="add-btn" style="width: auto; padding: 8px 20px;" id="rollBtn" onclick="rollEventWithAnim()">🎲 ทอยลูกเต๋า</button>
-            <div id="eventDisplay" style="margin-top:10px;">
-                <span id="diceResult" style="font-size:1.5rem; color:#ff2e63; font-weight:bold;">?</span><br>
-                <span id="eventDesc">...</span>
+        <div id="eventPanel" style="display: none; margin-top: 15px;">
+            <button class="add-btn" style="width: auto; padding: 8px 30px; margin-bottom: 10px;" id="rollBtn" onclick="rollEventWithAnim()">🎲 ทอยลูกเต๋า</button>
+            <div id="eventDisplay" style="display:none;">
+                <span class="dice-num" id="diceResult">?</span>
+                <span id="eventDesc">รอกดปุ่มทอยลูกเต๋า...</span>
             </div>
         </div>
     </div>
@@ -98,7 +106,7 @@
                     <th>ชื่อ</th>
                     <th>บทบาท</th>
                     <th>❤️ คู่</th>
-                    <th>👊 อันธ</th>
+                    <th>👊 อันธพาล</th>
                     <th>👁️ ลัทธิ</th>
                     <th>🛡️ กัน</th>
                     <th>⚙️ สถานะ</th>
@@ -111,27 +119,44 @@
 </div>
 
 <script>
-    const events = { 2:"หมาป่าใหม่", 3:"กำจัด 2 คนทันที", 4:"กำจัด 2 แทน 1", 5:"เผยเทพพยากรณ์", 6:"ไม่มีเหตุการณ์", 7:"ไม่มีเหตุการณ์", 8:"ไม่มีเหตุการณ์", 9:"เหมือนเมื่อวาน", 10:"ตัดตัวเลือก", 11:"ห้ามพูดคุย", 12:"เสียพลังพิเศษ" };
+    const events = { 
+        2: "คืนถัดไป เป้าหมายของมนุษย์หมาป่า จะกลายเป็นมนุษย์หมาป่าตัวใหม่",
+        3: "ผู้เล่นที่ถูกกล่าวหา 2 คน จะถูกกำจัดทันทีโดยไม่ต้องโหวต",
+        4: "จะมีผู้เล่นถูกกำจัด 2 คนแทนที่จะเป็น 1 คนเหมือนปกติ",
+        5: "บอกให้ผู้เล่นทุกคนรู้ว่าเทพพยากรณ์ถามบทบาทใครในคืนที่ผ่านมา",
+        6: "ไม่มีเหตุการณ์ใดเกิดขึ้นในวันนี้", 
+        7: "ไม่มีเหตุการณ์ใดเกิดขึ้นในวันนี้", 
+        8: "ไม่มีเหตุการณ์ใดเกิดขึ้นในวันนี้",
+        9: "เหตุการณ์ในวันนี้จะเหมือนกับเหตุการณ์เมื่อวานนี้",
+        10: "ใช้การกำจัดผู้เล่นแบบตัดตัวเลือก (ทุกคนโหวตคนรอด คนรอดโหวตคนต่อไป คนสุดท้ายโดนประหาร),
+        11: "ห้ามไม่ให้พูดคุยกันในวันนี้ นอกจากการทำการกล่าวหาเท่านั้น",
+        12: "คืนถัดไป เป้าหมายของมนุษย์หมาป่า จะไม่ตายแต่จะต้องสูญเสียพลังพิเศษทั้งหมด"
+    };
 
-    function toggleEventPanel() { document.getElementById('eventPanel').style.display = document.getElementById('useEvent').checked ? 'block' : 'none'; }
+    function toggleEventPanel() { 
+        document.getElementById('eventPanel').style.display = document.getElementById('useEvent').checked ? 'block' : 'none'; 
+    }
 
     function rollEventWithAnim() {
         const btn = document.getElementById('rollBtn');
         const dNum = document.getElementById('diceResult');
         const dText = document.getElementById('eventDesc');
+        const display = document.getElementById('eventDisplay');
         btn.disabled = true;
+        display.style.display = 'block';
+        
         let count = 0;
         const interval = setInterval(() => {
             dNum.innerText = Math.floor(Math.random() * 11) + 2;
             count += 100;
-            if (count >= 2000) {
+            if (count >= 1500) {
                 clearInterval(interval);
                 const res = (Math.floor(Math.random()*6)+1) + (Math.floor(Math.random()*6)+1);
                 dNum.innerText = res;
                 dText.innerText = events[res];
                 btn.disabled = false;
             }
-        }, 100);
+        }, 80);
     }
 
     function addPlayer() {
@@ -156,7 +181,7 @@
                     <option value="exiled">⚖️ เนรเทศ</option>
                 </select>
             </td>
-            <td><button onclick="this.parentElement.parentElement.remove(); updateStats();" style="background:none; border:none; color:#555;">❌</button></td>
+            <td><button onclick="this.parentElement.parentElement.remove(); updateStats();" style="background:none; border:none; color:#555; cursor:pointer;">❌</button></td>
         `;
         table.appendChild(row);
         nInput.value = ""; rInput.value = "";
@@ -225,24 +250,15 @@
 
     function updateStats() {
         const rows = document.querySelectorAll('#playerList tr');
-        let total = rows.length;
-        let dead = 0;
-        let cultists = 0;
-
+        let dead = 0, cultists = 0;
         rows.forEach(r => {
             const status = r.querySelector('.status-select').value;
             const isCultist = r.querySelector('.cult-check').checked;
-            
-            if (status === 'dead') {
-                dead++;
-            } else {
-                // นับเฉพาะคนของลัทธิที่ยังมีชีวิตอยู่
-                if (isCultist) cultists++;
-            }
+            if (status === 'dead') dead++;
+            else if (isCultist) cultists++;
         });
-
-        document.getElementById('totalCount').innerText = total;
-        document.getElementById('aliveCount').innerText = total - dead;
+        document.getElementById('totalCount').innerText = rows.length;
+        document.getElementById('aliveCount').innerText = rows.length - dead;
         document.getElementById('deadCount').innerText = dead;
         document.getElementById('cultCount').innerText = cultists;
     }
